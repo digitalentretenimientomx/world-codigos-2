@@ -2,7 +2,6 @@ const express = require('express');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 app.use(express.json());
@@ -535,4 +534,80 @@ app.get('/', (req, res) => {
                     document.getElementById('search-box-container').classList.add('hidden');
                     document.getElementById('result-box-container').classList.remove('hidden');
                 } else {
-                    alert('No se encontró el correo: ' + (result.error || result.message
+                    alert('No se encontró el correo: ' + (result.error || result.message || 'Intenta de nuevo'));
+                }
+            } catch(e) {
+                alert('Error al conectar con el servidor IMAP en vivo.');
+            }
+        }
+
+        function resetSearch() {
+            document.getElementById('search-subject').value = '';
+            document.getElementById('result-box-container').classList.add('hidden');
+            document.getElementById('search-box-container').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+    `);
+});
+
+app.post('/api/search-email', (req, res) => {
+    const { subjectQuery, imapConfig } = req.body;
+    const imap = createImapConnection(imapConfig || {});
+
+    imap.once('ready', () => {
+        imap.openBox('INBOX', true, (err, box) => {
+            if (err) {
+                imap.end();
+                return res.status(500).json({ success: false, error: 'No se pudo abrir INBOX' });
+            }
+
+            imap.search([['TEXT', subjectQuery]], (err, results) => {
+                if (err || !results || results.length === 0) {
+                    imap.end();
+                    return res.status(404).json({ success: false, message: 'Correo no encontrado' });
+                }
+
+                const latestId = results[results.length - 1];
+                const f = imap.fetch(latestId, { bodies: '' });
+
+                f.on('message', (msg) => {
+                    msg.on('body', (stream) => {
+                        simpleParser(stream)
+                            .then(parsed => {
+                                const emailData = {
+                                    subject: parsed.subject || 'Sin Asunto',
+                                    from: parsed.from ? parsed.from.text : 'Desconocido',
+                                    date: parsed.date || new Date(),
+                                    html: parsed.html || parsed.textAsHtml || '',
+                                    text: parsed.text || 'Sin contenido de texto'
+                                };
+
+                                imap.end();
+                                return res.json({ success: true, data: emailData });
+                            })
+                            .catch(parseErr => {
+                                imap.end();
+                                return res.status(500).json({ success: false, error: 'Error al interpretar el correo: ' + parseErr.message });
+                            });
+                    });
+                });
+
+                f.once('error', (fetchErr) => {
+                    imap.end();
+                    res.status(500).json({ success: false, error: fetchErr.message });
+                });
+            });
+        });
+    });
+
+    imap.once('error', (connErr) => {
+        res.status(500).json({ success: false, error: connErr.message });
+    });
+
+    imap.connect();
+});
+
+// EXPORTACIÓN OBLIGATORIA PARA VERCEL (Sin app.listen)
+module.exports = app;
