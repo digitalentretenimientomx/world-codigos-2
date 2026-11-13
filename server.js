@@ -19,7 +19,7 @@ function createImapConnection(config) {
     });
 }
 
-// Ruta Raíz con TODAS las secciones y diseño exacto
+// Ruta Raíz con TODAS las secciones, incluyendo la vista de Editar Plataforma
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Asunto o Referencia del Correo</label>
-                        <input type="text" id="search-subject" placeholder="Ej. Mi Disney / Código de acceso" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition">
+                        <input type="text" id="search-subject" placeholder="Ej. Confirma tu nuevo inicio de sesión" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition">
                     </div>
                     <button onclick="buscarCorreoReal()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg shadow-amber-400/20 flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -160,7 +160,7 @@ app.get('/', (req, res) => {
                 </div>
             </section>
 
-            <!-- SECCIÓN: PLATAFORMAS (DISEÑO EXACTO) -->
+            <!-- SECCIÓN: PLATAFORMAS (LISTADO) -->
             <section id="sec-plataformas" class="admin-section hidden space-y-6">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Plataformas</h1>
@@ -170,14 +170,6 @@ app.get('/', (req, res) => {
                     <div class="w-full md:flex-1">
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Buscar</label>
                         <input type="text" placeholder="Nombre o descripción..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
-                    </div>
-                    <div class="w-full md:w-48">
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Estado</label>
-                        <select class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
-                            <option>Todos</option>
-                            <option>Activo</option>
-                            <option>Inactivo</option>
-                        </select>
                     </div>
                     <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
                         <button onclick="switchSection('nueva-plataforma')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
@@ -204,28 +196,95 @@ app.get('/', (req, res) => {
                                 </td>
                                 <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
                                 <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
-                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
-                            </tr>
-                            <tr class="hover:bg-slate-850/50 transition">
-                                <td class="p-4 pl-6 flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 font-bold text-xs">N</div>
-                                    <span class="font-bold text-white tracking-wide">NETFLIX</span>
+                                <td class="p-4 text-right pr-6 space-x-2">
+                                    <button onclick="switchSection('editar-plataforma')" class="p-2 text-slate-400 hover:text-amber-400 transition" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button class="p-2 text-slate-400 hover:text-rose-400 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                                 </td>
-                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">4 asuntos</span></td>
-                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
-                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
-                            </tr>
-                            <tr class="hover:bg-slate-850/50 transition">
-                                <td class="p-4 pl-6 flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs">D</div>
-                                    <span class="font-bold text-white tracking-wide">DISNEY</span>
-                                </td>
-                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
-                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
-                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: EDITAR PLATAFORMA (EXACTO A TU IMAGEN) -->
+            <section id="sec-editar-plataforma" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Editar Plataforma</h1>
+                    <p class="text-sm text-slate-400">Modifica la configuración de la plataforma</p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl space-y-6">
+                    <form onsubmit="event.preventDefault(); alert('¡Cambios guardados exitosamente!'); switchSection('plataformas');" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Nombre de la Plataforma *</label>
+                                <input type="text" value="CRUNCHYROLL" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Slug *</label>
+                                <input type="text" value="crunchyroll" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Imagen de Portada</label>
+                            <span class="text-xs text-amber-400 block mb-2 font-medium">Logo actual</span>
+                            <div class="border-2 border-dashed border-slate-700 hover:border-amber-400/50 bg-slate-950 rounded-2xl p-8 text-center cursor-pointer transition">
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    <div class="text-slate-400 text-3xl mb-1"><i class="fa-regular fa-images"></i></div>
+                                    <p class="text-sm font-medium text-slate-300">Haz clic para seleccionar una nueva imagen</p>
+                                    <p class="text-xs text-slate-500">JPEG, PNG, JPG, GIF, SVG, WebP (max 2MB)</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-slate-400 block mt-2">Vista previa nueva</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Descripción</label>
+                            <textarea rows="3" placeholder="Descripción opcional de la plataforma..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400">Descripción opcional de la plataforma...</textarea>
+                        </div>
+
+                        <div class="flex items-center space-x-3 pt-1">
+                            <input type="checkbox" id="edit-plat-active" checked class="w-4 h-4 rounded border-slate-700 text-amber-400 bg-slate-950">
+                            <label for="edit-plat-active" class="text-sm font-medium text-slate-200">Plataforma activa</label>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 pt-4 border-t border-slate-800">
+                            <button type="button" onclick="switchSection('plataformas')" class="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl transition">Cancelar</button>
+                            <button type="submit" class="w-full md:w-1/2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- SECCIÓN DE ASUNTOS CONFIGURADOS -->
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Asuntos Configurados</h2>
+                            <p class="text-xs text-slate-400">Palabras clave que el sistema buscará en los correos</p>
+                        </div>
+                        <button onclick="alert('Abrir modal para agregar asunto de correo')" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow-md flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Agregar Asunto</span>
+                        </button>
+                    </div>
+
+                    <!-- Tarjeta del Asunto Configurado -->
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-white">Confirma tu nuevo inicio de sesión en Crunchyroll</h3>
+                                <p class="text-[11px] text-slate-500">Creado: 14/08/2026</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span>
+                            <button onclick="alert('Eliminar asunto')" class="text-slate-500 hover:text-rose-400 transition p-2"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -274,7 +333,7 @@ app.get('/', (req, res) => {
             </section>
 
             <!-- SECCIÓN: SERVIDORES IMAP -->
-            <section id="sec-servidores" class="admin-section space-y-6">
+            <section id="sec-servidores" class="admin-section hidden space-y-6">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Servidores IMAP</h1>
                     <p class="text-sm text-slate-400">Gestiona los servidores IMAP para verificación de códigos</p>
@@ -359,7 +418,7 @@ app.get('/', (req, res) => {
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            switchSection('servidores');
+            switchSection('plataformas');
         });
 
         function switchSection(sectionId) {
@@ -372,6 +431,7 @@ app.get('/', (req, res) => {
             
             let targetId = sectionId;
             if(sectionId === 'nueva-plataforma') targetId = 'nueva-plataforma';
+            if(sectionId === 'editar-plataforma') targetId = 'editar-plataforma';
             if(sectionId === 'nuevo-servidor') targetId = 'nuevo-servidor';
 
             const target = document.getElementById('sec-' + targetId);
@@ -380,7 +440,7 @@ app.get('/', (req, res) => {
             ['dashboard', 'plataformas', 'servidores', 'registros'].forEach(nav => {
                 const btn = document.getElementById('nav-' + nav);
                 if(btn) {
-                    if(nav === sectionId || (sectionId === 'nueva-plataforma' && nav === 'plataformas') || (sectionId === 'nuevo-servidor' && nav === 'servidores')) {
+                    if(nav === sectionId || (sectionId.includes('plataforma') && nav === 'plataformas') || (sectionId.includes('servidor') && nav === 'servidores')) {
                         btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-amber-400/10 text-amber-400 border border-amber-400/20";
                     } else {
                         btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200";
