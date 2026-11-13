@@ -8,7 +8,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Configuración de conexión IMAP
 function createImapConnection(config) {
     return new Imap({
         user: config.user || process.env.IMAP_USER,
@@ -20,7 +19,7 @@ function createImapConnection(config) {
     });
 }
 
-// Ruta Raíz que sirve directamente toda la interfaz web del Panel Admin y Sitio Público
+// Ruta Raíz con TODAS las secciones del panel web
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -93,7 +92,7 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <!-- 2. PANEL ADMIN -->
+    <!-- 2. PANEL ADMIN (MENÚ LATERAL) -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
         <div>
             <div class="p-6 border-b border-slate-800 flex items-center space-x-2">
@@ -135,7 +134,68 @@ app.get('/', (req, res) => {
         </header>
 
         <div class="p-8 overflow-y-auto flex-1">
-            <!-- SERVIDORES IMAP -->
+            
+            <!-- SECCIÓN: DASHBOARD -->
+            <section id="sec-dashboard" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+                    <p class="text-sm text-slate-400">Resumen general de actividad y conexiones IMAP.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Correos Consultados Hoy</p>
+                        <p class="text-3xl font-black text-white mt-2">24</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Estado Servidor IMAP</p>
+                        <p class="text-3xl font-black text-emerald-400 mt-2 flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-lg">Conectado</span>
+                        </p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Plataformas Activas</p>
+                        <p class="text-3xl font-black text-amber-400 mt-2">5</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: PLATAFORMAS -->
+            <section id="sec-plataformas" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Plataformas</h1>
+                    <p class="text-sm text-slate-400">Gestiona las plataformas de streaming</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
+                    <span class="text-sm text-slate-300">Listado de plataformas conectadas al sistema</span>
+                    <button onclick="switchSection('nueva-plataforma')" class="bg-amber-400 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold">Nueva Plataforma</button>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-950 text-slate-400 text-xs uppercase border-b border-slate-800">
+                            <tr><th class="p-4">Plataforma</th><th class="p-4">Estado</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td class="p-4 font-bold text-white">CRUNCHYROLL</td><td class="p-4 text-emerald-400">Activo</td></tr>
+                            <tr><td class="p-4 font-bold text-white">NETFLIX</td><td class="p-4 text-emerald-400">Activo</td></tr>
+                            <tr><td class="p-4 font-bold text-white">DISNEY</td><td class="p-4 text-emerald-400">Activo</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: NUEVA PLATAFORMA -->
+            <section id="sec-nueva-plataforma" class="admin-section hidden space-y-6 max-w-xl">
+                <h1 class="text-2xl font-bold text-white">Nueva Plataforma</h1>
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    <form onsubmit="event.preventDefault(); alert('Creada'); switchSection('plataformas');" class="space-y-4">
+                        <input type="text" placeholder="Nombre de la plataforma" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white">
+                        <button type="submit" class="w-full bg-amber-400 text-slate-950 font-bold py-3 rounded-xl">Guardar</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: SERVIDORES IMAP -->
             <section id="sec-servidores" class="admin-section space-y-6">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Servidores IMAP</h1>
@@ -143,10 +203,9 @@ app.get('/', (req, res) => {
                 </div>
                 <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="w-full md:flex-1">
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Buscar</label>
-                        <input type="text" placeholder="Correo, usuario o servidor..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                        <input type="text" placeholder="Correo, usuario o servidor..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white">
                     </div>
-                    <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
+                    <div class="w-full md:w-auto">
                         <button onclick="switchSection('nuevo-servidor')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-plus"></i>
                             <span>Nuevo Servidor</span>
@@ -155,22 +214,20 @@ app.get('/', (req, res) => {
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                     <table class="w-full text-left border-collapse text-sm">
-                        <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800 tracking-wider">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
                             <tr>
                                 <th class="p-4 pl-6">Correo</th>
                                 <th class="p-4">Usuario</th>
                                 <th class="p-4">Servidor IMAP</th>
-                                <th class="p-4">Encriptación</th>
                                 <th class="p-4">Estado</th>
                                 <th class="p-4 text-right pr-6">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800 text-slate-300">
-                            <tr>
+                            <tr class="hover:bg-slate-850/50 transition">
                                 <td class="p-4 pl-6 font-bold text-white">codigosworld@gmail.com</td>
-                                <td class="p-4">Mauricio</td>
-                                <td class="p-4 font-mono text-xs">imap.gmail.com:993</td>
-                                <td class="p-4"><span class="px-2.5 py-1 bg-slate-800 text-xs rounded">SSL</span></td>
+                                <td class="p-4 font-medium text-slate-300">Mauricio</td>
+                                <td class="p-4 font-mono text-xs text-slate-300">imap.gmail.com:993</td>
                                 <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
                                 <td class="p-4 text-right pr-6">
                                     <button onclick="switchSection('public')" class="bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold transition">Abrir Sitio Público</button>
@@ -181,7 +238,7 @@ app.get('/', (req, res) => {
                 </div>
             </section>
 
-            <!-- NUEVO SERVIDOR -->
+            <!-- SECCIÓN: NUEVO SERVIDOR -->
             <section id="sec-nuevo-servidor" class="admin-section hidden space-y-6 max-w-2xl">
                 <div class="border-b border-slate-800 pb-4">
                     <h2 class="text-xl font-bold text-white">Nuevo Servidor IMAP</h2>
@@ -203,6 +260,18 @@ app.get('/', (req, res) => {
                     </form>
                 </div>
             </section>
+
+            <!-- SECCIÓN: REGISTROS -->
+            <section id="sec-registros" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Registros</h1>
+                    <p class="text-sm text-slate-400">Historial de consultas de correos.</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-6 text-slate-400">
+                    No hay registros recientes en este momento.
+                </div>
+            </section>
+
         </div>
     </main>
 
@@ -216,6 +285,18 @@ app.get('/', (req, res) => {
             document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
             const target = document.getElementById('sec-' + sectionId);
             if(target) target.classList.remove('hidden');
+
+            // Cambiar estilos de botones del menú lateral
+            ['dashboard', 'plataformas', 'servidores', 'registros'].forEach(nav => {
+                const btn = document.getElementById('nav-' + nav);
+                if(btn) {
+                    if(nav === sectionId) {
+                        btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-amber-400/10 text-amber-400 border border-amber-400/20";
+                    } else {
+                        btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+                    }
+                }
+            });
         }
 
         async function buscarCorreoReal() {
@@ -253,7 +334,6 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Endpoint para buscar correo en tiempo real
 app.post('/api/search-email', (req, res) => {
     const { subjectQuery, imapConfig } = req.body;
     const imap = createImapConnection(imapConfig || {});
