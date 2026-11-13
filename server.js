@@ -8,10 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Servir los archivos estáticos del frontend (HTML, CSS, JS) desde la misma carpeta del servidor
+// Servir los archivos estáticos del frontend
 app.use(express.static(__dirname));
 
-// Función auxiliar para crear la conexión IMAP con tus credenciales
 function createImapConnection(config) {
     return new imap({
         user: config.user || process.env.IMAP_USER,
@@ -23,9 +22,7 @@ function createImapConnection(config) {
     });
 }
 
-// Endpoint para buscar correos en el buzón IMAP
 app.post('/api/search-email', (req, res) => {
-    // Acepta 'subjectQuery', 'query' o 'asunto' enviadas desde cualquier botón o formulario
     const subjectQuery = req.body.subjectQuery || req.body.query || req.body.asunto;
     const { imapConfig } = req.body;
 
@@ -42,50 +39,55 @@ app.post('/api/search-email', (req, res) => {
                 return res.status(500).json({ success: false, error: 'No se pudo abrir la bandeja INBOX' });
             }
 
-            // 'TEXT' busca de manera flexible en todo el mensaje: Asunto, Remitente y Cuerpo
+            // Criterio amplio de búsqueda para atrapar tanto por correo del remitente, asunto o texto
             const searchCriteria = [['TEXT', subjectQuery]];
 
             imapInstance.search(searchCriteria, (err, results) => {
                 if (err || !results || results.length === 0) {
                     imapInstance.end();
-                    return res.status(404).json({ success: false, message: 'Correo no encontrado con ese criterio.' });
+                    return res.status(404).json({ success: false, message: 'No se encontraron correos con ese criterio.' });
                 }
 
-                // Obtiene el correo más reciente que coincida con la búsqueda
-                const f = imapInstance.fetch(results[results.length - 1], { bodies: '' });
+                // Tomamos el mensaje más reciente de los resultados encontrados
+                const latestId = results[results.length - 1];
+                const f = imapInstance.fetch(latestId, { bodies: '' });
                 let emailData = {};
 
                 f.on('message', (msg) => {
                     msg.on('body', (stream) => {
-                        simpleParser(stream, (err, parsed) => {
-                            if (!err) {
+                        simpleParser(stream, (parseErr, parsed) => {
+                            if (!parseErr) {
                                 emailData = {
-                                    subject: parsed.subject,
-                                    from: parsed.from.text,
+                                    subject: parsed.subject || 'Sin Asunto',
+                                    from: parsed.from ? parsed.from.text : 'Desconocido',
                                     date: parsed.date,
-                                    html: parsed.html || parsed.textAsHtml,
-                                    text: parsed.text
+                                    html: parsed.html || parsed.textAsHtml || '',
+                                    text: parsed.text || ''
                                 };
                             }
                         });
                     });
                 });
 
-                f.once('error', (err) => {
+                f.once('error', (fetchErr) => {
                     imapInstance.end();
-                    res.status(500).json({ success: false, error: err.message });
+                    res.status(500).json({ success: false, error: fetchErr.message });
                 });
 
                 f.once('end', () => {
                     imapInstance.end();
-                    res.json({ success: true, data: emailData });
+                    // Enviamos la respuesta estructurada que el frontend lee para la vista previa
+                    res.json({ 
+                        success: true, 
+                        data: emailData 
+                    });
                 });
             });
         });
     });
 
-    imapInstance.once('error', (err) => {
-        res.status(500).json({ success: false, error: err.message });
+    imapInstance.once('error', (connErr) => {
+        res.status(500).json({ success: false, error: connErr.message });
     });
 
     imapInstance.connect();
