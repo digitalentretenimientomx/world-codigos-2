@@ -1,7 +1,6 @@
 {
   "name": "code-codex-imap",
   "version": "1.0.0",
-  "description": "Sistema de consulta IMAP para Code Codex",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
