@@ -2,12 +2,17 @@ const express = require('express');
 const imap = require('imap');
 const { simpleParser } = require('mailparser');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Función auxiliar para crear la conexión IMAP usando las credenciales del servidor o de la petición
+// Servir los archivos estáticos del frontend (HTML, CSS, JS) desde la carpeta actual o una carpeta llamada 'public'
+// Si tus archivos están en la raíz, usa __dirname; si están en una carpeta, cambia a path.join(__dirname, 'public')
+app.use(express.static(__dirname));
+
+// Función auxiliar para crear la conexión IMAP
 function createImapConnection(config) {
     return new imap({
         user: config.user || process.env.IMAP_USER,
@@ -31,7 +36,6 @@ app.post('/api/search-email', (req, res) => {
                 return res.status(500).json({ success: false, error: 'No se pudo abrir la bandeja INBOX' });
             }
 
-            // 'TEXT' busca en todo el mensaje: Asunto, Remitente, Destinatario y Cuerpo
             const searchCriteria = [['TEXT', subjectQuery]];
 
             imapInstance.search(searchCriteria, (err, results) => {
@@ -40,7 +44,6 @@ app.post('/api/search-email', (req, res) => {
                     return res.status(404).json({ success: false, message: 'Correo no encontrado con ese criterio.' });
                 }
 
-                // Extrae el correo más reciente que coincida con la búsqueda
                 const f = imapInstance.fetch(results[results.length - 1], { bodies: '' });
                 let emailData = {};
 
