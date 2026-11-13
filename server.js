@@ -19,7 +19,7 @@ function createImapConnection(config) {
     });
 }
 
-// Ruta Raíz con TODAS las secciones, diseño y lógica del panel de administración
+// Ruta Raíz con TODAS las secciones y diseño del panel de administración
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -525,7 +525,6 @@ app.get('/', (req, res) => {
                 if(result.success) {
                     document.getElementById('email-date').innerText = new Date(result.data.date).toLocaleString();
                     
-                    // Renderiza la vista previa completa en HTML o texto plano
                     const bodyContainer = document.getElementById('email-body-content');
                     if (result.data.html) {
                         bodyContainer.innerHTML = result.data.html;
@@ -536,82 +535,4 @@ app.get('/', (req, res) => {
                     document.getElementById('search-box-container').classList.add('hidden');
                     document.getElementById('result-box-container').classList.remove('hidden');
                 } else {
-                    alert('No se encontró el correo: ' + (result.error || result.message || 'Intenta de nuevo'));
-                }
-            } catch(e) {
-                alert('Error al conectar con el servidor IMAP en vivo.');
-            }
-        }
-
-        function resetSearch() {
-            document.getElementById('search-subject').value = '';
-            document.getElementById('result-box-container').classList.add('hidden');
-            document.getElementById('search-box-container').classList.remove('hidden');
-        }
-    </script>
-</body>
-</html>
-    `);
-});
-
-app.post('/api/search-email', (req, res) => {
-    const { subjectQuery, imapConfig } = req.body;
-    const imap = createImapConnection(imapConfig || {});
-
-    imap.once('ready', () => {
-        imap.openBox('INBOX', true, (err, box) => {
-            if (err) {
-                imap.end();
-                return res.status(500).json({ success: false, error: 'No se pudo abrir INBOX' });
-            }
-
-            // Búsqueda flexible en todo el mensaje (asunto, remitente y cuerpo)
-            imap.search([['TEXT', subjectQuery]], (err, results) => {
-                if (err || !results || results.length === 0) {
-                    imap.end();
-                    return res.status(404).json({ success: false, message: 'Correo no encontrado' });
-                }
-
-                const f = imap.fetch(results[results.length - 1], { bodies: '' });
-                let emailData = {};
-
-                f.on('message', (msg) => {
-                    msg.on('body', (stream) => {
-                        simpleParser(stream, (parseErr, parsed) => {
-                            if (!parseErr) {
-                                emailData = {
-                                    subject: parsed.subject || 'Sin Asunto',
-                                    from: parsed.from ? parsed.from.text : 'Desconocido',
-                                    date: parsed.date,
-                                    html: parsed.html || parsed.textAsHtml || '',
-                                    text: parsed.text || ''
-                                };
-                            }
-                        });
-                    });
-                });
-
-                f.once('error', (fetchErr) => {
-                    imap.end();
-                    res.status(500).json({ success: false, error: fetchErr.message });
-                });
-
-                f.once('end', () => {
-                    imap.end();
-                    res.json({ success: true, data: emailData });
-                });
-            });
-        });
-    });
-
-    imap.once('error', (connErr) => {
-        res.status(500).json({ success: false, error: connErr.message });
-    });
-
-    imap.connect();
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-});
+                    alert('No se encontró el correo: ' + (result.error || result.message
