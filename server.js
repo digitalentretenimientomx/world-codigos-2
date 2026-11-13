@@ -19,7 +19,7 @@ function createImapConnection(config) {
     });
 }
 
-// Ruta Raíz con TODAS las secciones y eliminación funcional
+// Ruta Raíz con TODAS las secciones, diseño y lógica del panel de administración
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -67,7 +67,7 @@ app.get('/', (req, res) => {
                 </div>
             </div>
 
-            <!-- Resultado -->
+            <!-- Resultado / Vista Previa -->
             <div id="result-box-container" class="hidden bg-slate-900/95 border border-slate-800 p-6 rounded-2xl shadow-2xl backdrop-blur-md text-center">
                 <h2 class="text-lg font-bold text-white mb-4">BIENVENIDOS A TU PAGINA DE CODIGOS</h2>
                 <div class="flex justify-center mb-3">
@@ -474,7 +474,7 @@ app.get('/', (req, res) => {
             const card = document.createElement('div');
             card.id = newId;
             card.className = "bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between";
-            card.innerHTML = `
+            card.innerHTML = \`
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
                         <i class="fa-solid fa-envelope"></i>
@@ -488,7 +488,7 @@ app.get('/', (req, res) => {
                     <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span>
                     <button onclick="eliminarAsunto('\${newId}')" class="text-slate-500 hover:text-rose-400 transition p-2" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                 </div>
-            `;
+            \`;
             container.appendChild(card);
             
             document.getElementById('new-subject-input').value = '';
@@ -525,7 +525,7 @@ app.get('/', (req, res) => {
                 if(result.success) {
                     document.getElementById('email-date').innerText = new Date(result.data.date).toLocaleString();
                     
-                    // Renderiza la vista previa completa en HTML (respetando diseños originales) o texto plano
+                    // Renderiza la vista previa completa en HTML o texto plano
                     const bodyContainer = document.getElementById('email-body-content');
                     if (result.data.html) {
                         bodyContainer.innerHTML = result.data.html;
