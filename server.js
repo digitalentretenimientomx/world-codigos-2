@@ -8,11 +8,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Servir los archivos estáticos del frontend (HTML, CSS, JS) desde la carpeta actual o una carpeta llamada 'public'
-// Si tus archivos están en la raíz, usa __dirname; si están en una carpeta, cambia a path.join(__dirname, 'public')
+// Servir los archivos estáticos del frontend (HTML, CSS, JS) desde la misma carpeta del servidor
 app.use(express.static(__dirname));
 
-// Función auxiliar para crear la conexión IMAP
+// Función auxiliar para crear la conexión IMAP con tus credenciales
 function createImapConnection(config) {
     return new imap({
         user: config.user || process.env.IMAP_USER,
@@ -26,7 +25,14 @@ function createImapConnection(config) {
 
 // Endpoint para buscar correos en el buzón IMAP
 app.post('/api/search-email', (req, res) => {
-    const { subjectQuery, imapConfig } = req.body;
+    // Acepta 'subjectQuery', 'query' o 'asunto' enviadas desde cualquier botón o formulario
+    const subjectQuery = req.body.subjectQuery || req.body.query || req.body.asunto;
+    const { imapConfig } = req.body;
+
+    if (!subjectQuery) {
+        return res.status(400).json({ success: false, error: 'Falta el término de búsqueda.' });
+    }
+
     const imapInstance = createImapConnection(imapConfig || {});
 
     imapInstance.once('ready', () => {
@@ -36,6 +42,7 @@ app.post('/api/search-email', (req, res) => {
                 return res.status(500).json({ success: false, error: 'No se pudo abrir la bandeja INBOX' });
             }
 
+            // 'TEXT' busca de manera flexible en todo el mensaje: Asunto, Remitente y Cuerpo
             const searchCriteria = [['TEXT', subjectQuery]];
 
             imapInstance.search(searchCriteria, (err, results) => {
@@ -44,6 +51,7 @@ app.post('/api/search-email', (req, res) => {
                     return res.status(404).json({ success: false, message: 'Correo no encontrado con ese criterio.' });
                 }
 
+                // Obtiene el correo más reciente que coincida con la búsqueda
                 const f = imapInstance.fetch(results[results.length - 1], { bodies: '' });
                 let emailData = {};
 

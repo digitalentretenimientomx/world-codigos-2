@@ -1,7 +1,7 @@
 {
   "name": "world-codigos",
   "version": "1.0.0",
-  "description": "Servidor IMAP para buscar codigos de correo en vivo",
+  "description": "Servidor IMAP para buscar códigos de correo en vivo",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
