@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Codex - Panel IMAP & Servidores</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        codexDark: '#0b1329',
+                        codexSidebar: '#070b19',
+                        codexCard: '#111c38',
+                        codexBorder: '#1e294b',
+                        codexYellow: '#ffd700',
+                        codexYellowHover: '#facc15',
+                        codexBlue: '#2563eb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #1e294b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-codexDark text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- App Container -->
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-codexSidebar border-r border-codexBorder flex flex-col justify-between transition-all duration-300 z-30 fixed lg:static inset-y-0 left-0 -translate-x-full lg:translate-x-0">
+            <div>
+                <!-- Brand Header -->
+                <div class="h-20 flex items-center px-6 gap-3 border-b border-codexBorder">
+                    <div class="text-codexYellow font-black text-2xl tracking-wider flex items-center gap-1">
+                        <span>CODE</span>
+                        <span class="text-white">CODEX</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="p-4 space-y-1.5">
+                    <a href="#" onclick="switchTab('dashboard', event)" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition font-medium text-sm">
+                        <i class="fa-solid fa-house w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" onclick="switchTab('platforms', event)" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition font-medium text-sm">
+                        <i class="fa-solid fa-layer-group w-5"></i>
+                        <span>Plataformas</span>
+                    </a>
+                    <a href="#" onclick="switchTab('servers', event)" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl text-white bg-amber-500/10 border border-amber-500/20 font-semibold text-sm">
+                        <i class="fa-solid fa-server w-5 text-amber-400"></i>
+                        <span>Servidores</span>
+                    </a>
+                    <a href="#" onclick="switchTab('public-site', event)" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition font-medium text-sm">
+                        <i class="fa-solid fa-globe w-5"></i>
+                        <span>Mi sitio público</span>
+                    </a>
+                    <a href="#" onclick="switchTab('logs', event)" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition font-medium text-sm">
+                        <i class="fa-solid fa-file-lines w-5"></i>
+                        <span>Registros</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Footer / Logout -->
+            <div class="p-4 border-t border-codexBorder">
+                <button onclick="showNotification('Sesión finalizada correctamente', 'info')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 transition font-medium text-sm">
+                    <i class="fa-solid fa-right-from-bracket w-5"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-codexDark">
+            
+            <!-- Top Navbar -->
+            <header class="h-20 bg-codexDark/85 backdrop-blur border-b border-codexBorder px-6 flex items-center justify-between z-20 shrink-0">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-300 hover:text-white text-xl p-2 rounded-lg hover:bg-slate-800 transition">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="page-title" class="text-lg font-bold text-white tracking-wide">Editar Servidor IMAP</h1>
+                        <p id="page-subtitle" class="text-xs text-slate-400 hidden sm:block">Modifica la configuración del servidor IMAP y busca correos por asunto</p>
+                    </div>
+                </div>
+
+                <!-- User profile / status widget -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex items-center gap-2 bg-codexCard px-3 py-1.5 rounded-full border border-codexBorder text-xs text-emerald-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>IMAP Sincronizado</span>
+                    </div>
+                    <div class="flex items-center gap-3 pl-2 border-l border-codexBorder">
+                        <div class="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">
+                            CW
+                        </div>
+                        <div class="hidden sm:block text-left">
+                            <div class="text-xs font-semibold text-white">Codigos World</div>
+                            <div class="text-[10px] text-slate-400">admin@codigosworld</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Pane -->
+            <main class="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
+
+                <!-- TAB: SERVIDORES (Configuración IMAP & Gestor de Correo) -->
+                <div id="tab-servers" class="tab-content space-y-6 max-w-6xl mx-auto">
+                    
+                    <!-- Config Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Left 2 Cols: IMAP Config Form (Exact match to reference image) -->
+                        <div class="lg:col-span-2 bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl">
+                            <div class="flex items-center justify-between pb-4 mb-6 border-b border-codexBorder">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-envelope-circle-check text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="font-bold text-white text-base">Editar Servidor IMAP</h2>
+                                        <p class="text-xs text-slate-400">Modifica la configuración del servidor IMAP</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">SSL/TLS Activo</span>
+                            </div>
+
+                            <form id="imapForm" onsubmit="event.preventDefault(); saveImapConfig();" class="space-y-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Correo Electrónico *</label>
+                                    <input type="email" id="imapEmail" value="codigosworld@gmail.com" required
+                                        class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Usuario IMAP *</label>
+                                    <input type="text" id="imapUser" value="codigosworld@gmail.com" required
+                                        class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Nueva Contraseña IMAP</label>
+                                    <input type="password" id="imapPass" value="••••••••••••••••"
+                                        class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                    <p class="text-[11px] text-slate-400 mt-1.5 italic">Solo llena este campo si deseas cambiar la contraseña</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Servidor IMAP *</label>
+                                        <input type="text" id="imapServer" value="imap.gmail.com" required
+                                            class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Puerto IMAP *</label>
+                                        <input type="number" id="imapPort" value="993" required
+                                            class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Encriptación</label>
+                                    <select id="imapEncryption" class="w-full bg-[#070b19] border border-codexBorder rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+                                        <option value="SSL/TLS" selected>SSL/TLS</option>
+                                        <option value="STARTTLS">STARTTLS</option>
+                                        <option value="Ninguna">Ninguna</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex items-center gap-3 pt-2">
+                                    <input type="checkbox" id="imapActive" checked class="w-4 h-4 rounded bg-[#070b19] border-codexBorder text-amber-500 focus:ring-0 cursor-pointer">
+                                    <label for="imapActive" class="text-sm font-medium text-slate-200 cursor-pointer">Servidor activo</label>
+                                </div>
+
+                                <!-- Diagnostic Section Box -->
+                                <div class="bg-[#070b19] border border-codexBorder rounded-xl p-5 mt-4 space-y-3">
+                                    <div class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Diagnóstico de Conexión</div>
+                                    <p class="text-xs text-slate-400">Verifica que la conexión IMAP funcione antes de guardar los cambios.</p>
+                                    <button type="button" onclick="diagnoseConnection()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        <span>Diagnosticar Conexión IMAP</span>
+                                    </button>
+                                    <div id="diagnosticResult" class="hidden text-xs p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-2 animate-fadeIn">
+                                        <i class="fa-solid fa-circle-check text-sm"></i>
+                                        <span id="diagnosticText">¡Conexión IMAP establecida con éxito! Buzón respondiendo correctamente en puerto 993.</span>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex items-center justify-end gap-3 pt-4 border-t border-codexBorder">
+                                    <button type="button" onclick="resetForm()" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" class="px-6 py-3 rounded-xl bg-codexYellow hover:bg-codexYellowHover text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/10">
+                                        Guardar Cambios
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right Col: Interactive IMAP Email Search & Attachment Extractor -->
+                        <div class="space-y-6">
+                            <div class="bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center gap-3 pb-4 mb-4 border-b border-codexBorder">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-white text-base">Buscador IMAP por Asunto</h3>
+                                            <p class="text-xs text-slate-400">Consulta buzón y extrae adjuntos</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Search Input -->
+                                    <div class="space-y-3">
+                                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Asunto (Subject)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="searchSubject" placeholder="Ej. Factura, Reporte, Pago..." value="Factura"
+                                                class="flex-1 bg-[#070b19] border border-codexBorder rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                            <button onclick="searchEmailsBySubject()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center shadow-md shadow-amber-500/10">
+                                                <i class="fa-solid fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Results List Container -->
+                                    <div class="mt-5 space-y-3">
+                                        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex justify-between items-center">
+                                            <span>Correos Vinculados</span>
+                                            <span id="resultsCount" class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[10px]">3 resultados</span>
+                                        </div>
+
+                                        <div id="emailList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                            <!-- Dynamically populated sample emails -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Email Detail & Attachment Viewer Modal/Card -->
+                    <div id="emailDetailCard" class="hidden bg-codexCard border border-amber-500/30 rounded-2xl p-6 shadow-2xl transition-all animate-fadeIn">
+                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-codexBorder">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-file-invoice text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 id="detailSubject" class="font-bold text-white text-base">Factura #9821 - Servicios Cloud</h3>
+                                    <p id="detailSender" class="text-xs text-slate-400">De: billing@aws-cloud.com • 12 Nov 2026, 11:20 AM</p>
+                                </div>
+                            </div>
+                            <button onclick="closeEmailDetail()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800">
+                                <i class="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Email Body / Extracted Data -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Datos Extraídos del Cuerpo</h4>
+                                <div id="detailBodyContent" class="bg-[#070b19] border border-codexBorder rounded-xl p-4 text-sm text-slate-300 space-y-2">
+                                    <p><strong>Cliente:</strong> Codigos World S.A.S</p>
+                                    <p><strong>Concepto:</strong> Servidor IMAP Dedicado & Cloud Storage</p>
+                                    <p><strong>Monto Total:</strong> $149.00 USD</p>
+                                    <p><strong>Estado:</strong> Pagado / Aprobado</p>
+                                </div>
+                            </div>
+
+                            <!-- Attachments List -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Archivos Adjuntos Vinculados</h4>
+                                <div id="detailAttachments" class="space-y-2">
+                                    <!-- Rendered attachments -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-codexCard border border-codexBorder rounded-2xl p-5 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-400 uppercase">Servidores IMAP</span>
+                                <i class="fa-solid fa-server text-amber-400"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-white mt-2">4 Activos</div>
+                            <div class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-trend-up"></i> 100% Operativo
+                            </div>
+                        </div>
+                        <div class="bg-codexCard border border-codexBorder rounded-2xl p-5 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-400 uppercase">Correos Procesados</span>
+                                <i class="fa-solid fa-envelope-open-text text-blue-400"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-white mt-2">1,284</div>
+                            <div class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-trend-up"><span>+12.4% hoy</span></i>
+                            </div>
+                        </div>
+                        <div class="bg-codexCard border border-codexBorder rounded-2xl p-5 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-400 uppercase">Adjuntos Extraídos</span>
+                                <i class="fa-solid fa-paperclip text-purple-400"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-white mt-2">940</div>
+                            <div class="text-xs text-slate-400 mt-1">PDFs y XMLs procesados</div>
+                        </div>
+                        <div class="bg-codexCard border border-codexBorder rounded-2xl p-5 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-400 uppercase">Plataformas Conectadas</span>
+                                <i class="fa-solid fa-cubes text-emerald-400"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-white mt-2">12 Conectadas</div>
+                            <div class="text-xs text-emerald-400 mt-1">Sincronización en tiempo real</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl space-y-4">
+                        <h3 class="font-bold text-white text-base">Actividad Reciente del Buzón IMAP</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#070b19] border border-codexBorder">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-semibold text-white">Sincronización IMAP Exitosa</div>
+                                        <div class="text-xs text-slate-400">Buzón codigosworld@gmail.com actualizado</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-slate-400">Hace 2 mins</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#070b19] border border-codexBorder">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-file-arrow-down"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-semibold text-white">Extracción de Adjunto por Asunto</div>
+                                        <div class="text-xs text-slate-400">Asunto: "Factura #9821" -> Factura_9821.pdf</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-slate-400">Hace 14 mins</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: PLATAFORMAS -->
+                <div id="tab-platforms" class="tab-content hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-codexBorder">
+                            <div>
+                                <h3 class="font-bold text-white text-base">Plataformas Conectadas</h3>
+                                <p class="text-xs text-slate-400">Sistemas vinculados al motor de lectura IMAP</p>
+                            </div>
+                            <button onclick="showNotification('Conectando nueva plataforma...', 'info')" class="bg-codexYellow hover:bg-codexYellowHover text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">
+                                + Conectar Plataforma
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-5 rounded-xl bg-[#070b19] border border-codexBorder space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="font-bold text-white text-sm">ERP Facturación Cloud</div>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <p class="text-xs text-slate-400">Vinculado al buzón IMAP para lectura automática de comprobantes.</p>
+                            </div>
+                            <div class="p-5 rounded-xl bg-[#070b19] border border-codexBorder space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="font-bold text-white text-sm">Portal de Clientes S.A.</div>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <p class="text-xs text-slate-400">Busca y extrae PDFs por asunto de manera programada.</p>
+                            </div>
+                            <div class="p-5 rounded-xl bg-[#070b19] border border-codexBorder space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="font-bold text-white text-sm">Bot de Notificaciones</div>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                </div>
+                                <p class="text-xs text-slate-400">Alerta en tiempo real sobre nuevos correos recibidos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: MI SITIO PÚBLICO (Vista Principal de Previsualización IMAP en Tiempo Real) -->
+                <div id="tab-public-site" class="tab-content hidden space-y-6 max-w-5xl mx-auto">
+                    <div class="bg-gradient-to-r from-amber-500/10 via-blue-600/10 to-codexCard border border-codexBorder rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="max-w-2xl space-y-4">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+                                <i class="fa-solid fa-satellite-dish"></i>
+                                <span>Portal Público & Buscador IMAP</span>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Previsualizador de Correos y Adjuntos IMAP</h2>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                Ingresa una dirección de correo o busca directamente por **asunto** en el buzón vinculado para extraer en tiempo real el contenido del mensaje y sus archivos adjuntos de forma automatizada.
+                            </p>
+                        </div>
+
+                        <!-- Search Box for Public View -->
+                        <div class="mt-8 bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Buscar por Asunto o Correo Destino</label>
+                                    <div class="relative">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400 text-sm"></i>
+                                        <input type="text" id="publicSearchInput" placeholder="Ej. Factura, Reporte, codigosworld@gmail.com..." value="Factura"
+                                            class="w-full bg-[#070b19] border border-codexBorder rounded-xl pl-11 pr-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-amber-500 transition">
+                                    </div>
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="executePublicSearch()" class="w-full bg-codexYellow hover:bg-codexYellowHover text-slate-950 font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10">
+                                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                                        <span>Buscar y Vincular</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Live Results Preview Container -->
+                    <div id="publicResultsSection" class="space-y-6">
+                        <div class="flex items-center justify-between px-2">
+                            <h3 class="font-bold text-white text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-inbox text-amber-400"></i>
+                                <span>Resultados en Tiempo Real</span>
+                            </h3>
+                            <span id="publicResultsBadge" class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-medium">3 correos sincronizados</span>
+                        </div>
+
+                        <div id="publicResultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Cards populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Live Full Preview Detail Card -->
+                    <div id="publicLivePreviewCard" class="hidden bg-codexCard border border-emerald-500/30 rounded-3xl p-8 shadow-2xl space-y-6 animate-fadeIn">
+                        <div class="flex items-center justify-between pb-4 border-b border-codexBorder">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-envelope-open-text"></i>
+                                </div>
+                                <div>
+                                    <h4 id="pubPrevSubject" class="font-bold text-white text-lg">Factura #9821 - Servicios Cloud</h4>
+                                    <p id="pubPrevSender" class="text-xs text-slate-400">Buzón IMAP: codigosworld@gmail.com • De: billing@aws-cloud.com</p>
+                                </div>
+                            </div>
+                            <button onclick="closePublicPreview()" class="text-slate-400 hover:text-white p-2.5 rounded-xl hover:bg-slate-800 transition">
+                                <i class="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Cuerpo del Mensaje Sincronizado</span>
+                                <div id="pubPrevBody" class="bg-[#070b19] border border-codexBorder rounded-2xl p-5 text-sm text-slate-300 space-y-2">
+                                    <!-- Body content -->
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Archivos Adjuntos Extraídos</span>
+                                <div id="pubPrevAttachments" class="space-y-3">
+                                    <!-- Attachments -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: REGISTROS -->
+                <div id="tab-logs" class="tab-content hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="bg-codexCard border border-codexBorder rounded-2xl p-6 shadow-xl space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-white text-base">Registros de Actividad IMAP</h3>
+                            <button onclick="showNotification('Registros exportados en formato CSV', 'success')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-xl transition font-medium">Exportar Logs</button>
+                        </div>
+                        <div class="bg-[#070b19] border border-codexBorder rounded-xl p-4 font-mono text-xs text-slate-300 space-y-2 max-h-[350px] overflow-y-auto">
+                            <div class="text-emerald-400">[11:34:22] Conexión IMAP establecida con imap.gmail.com:993 (SSL/TLS)</div>
+                            <div class="text-slate-400">[11:34:25] Búsqueda ejecutada por asunto: "Factura" -> 3 resultados encontrados</div>
+                            <div class="text-blue-400">[11:35:10] Extracción de adjunto completada: Factura_9821.pdf (1.2 MB)</div>
+                            <div class="text-slate-400">[11:36:00] Sincronización automática de buzón en segundo plano OK.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-codexCard border border-codexBorder text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMsg" class="text-sm font-medium">Operación realizada con éxito</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Sample mock database of emails searchable by Subject
+        const mockEmails = [
+            {
+                id: 1,
+                subject: "Factura #9821 - Servicios Cloud",
+                sender: "billing@aws-cloud.com",
+                date: "12 Nov 2026, 11:20 AM",
+                body: "Cliente: Codigos World S.A.S\nConcepto: Servidor IMAP Dedicado & Cloud Storage\nMonto: $149.00 USD\nEstado: Pagado",
+                attachments: [
+                    { name: "Factura_9821.pdf", size: "1.2 MB", type: "pdf" },
+                    { name: "Comprobante_Pago.xml", size: "45 KB", type: "xml" }
+                ]
+            },
+            {
+                id: 2,
+                subject: "Factura de Suscripción Mensual #4490",
+                sender: "pagos@github.com",
+                date: "10 Nov 2026, 09:15 AM",
+                body: "Empresa: Codigos World\nSuscripción: Team Enterprise Plan\nMonto: $89.00 USD\nEstado: Aprobado",
+                attachments: [
+                    { name: "Receipt-4490.pdf", size: "850 KB", type: "pdf" }
+                ]
+            },
+            {
+                id: 3,
+                subject: "Factura de Servidores VPS #7712",
+                sender: "billing@digitalocean.com",
+                date: "05 Nov 2026, 04:40 PM",
+                body: "Servidores: 4 Droplets Linux\nMonto Total: $40.00 USD\nEstado: Pagado automáticamente",
+                attachments: [
+                    { name: "Invoice_DO_7712.pdf", size: "1.1 MB", type: "pdf" },
+                    { name: "Detalle_Uso.csv", size: "12 KB", type: "csv" }
+                ]
+            },
+            {
+                id: 4,
+                subject: "Reporte de Seguridad y Conexión IMAP",
+                sender: "security@codigosworld.com",
+                date: "01 Nov 2026, 08:00 AM",
+                body: "Diagnóstico periódico de buzones IMAP completado sin anomalías.",
+                attachments: [
+                    { name: "Reporte_Seguridad_Nov.pdf", size: "2.4 MB", type: "pdf" }
+                ]
+            }
+        ];
+
+        // Switch Tabs Functionality
+        function switchTab(tabId, event) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Update nav classes
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-white', 'bg-amber-500/10', 'border', 'amber-500/20');
+                el.classList.add('text-slate-400');
+            });
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active', 'text-white', 'bg-amber-500/10', 'border', 'amber-500/20');
+                event.currentTarget.classList.remove('text-slate-400');
+            }
+
+            // Update Header titles
+            const titles = {
+                'dashboard': ['Dashboard General', 'Panel principal de estadísticas y monitoreo'],
+                'platforms': ['Plataformas', 'Gestión de integraciones y servicios externos'],
+                'servers': ['Editar Servidor IMAP', 'Modifica la configuración del servidor IMAP'],
+                'public-site': ['Mi Sitio Público', 'Previsualización y vinculación de correos en tiempo real'],
+                'logs': ['Registros de Actividad', 'Historial detallado de operaciones IMAP']
+            };
+            document.getElementById('page-title').innerText = titles[tabId][0];
+            document.getElementById('page-subtitle').innerText = titles[tabId][1];
+
+            // Close mobile menu if open
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+        }
+
+        // Toggle mobile sidebar
+        function toggleMobileSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+        }
+
+        // Toast notification system
+        function showNotification(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMsg');
+            const iconEl = document.getElementById('toastIcon');
+
+            msgEl.innerText = msg;
+            if (type === 'success') {
+                iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            } else {
+                iconEl.className = "fa-solid fa-circle-info text-blue-400 text-lg";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Diagnose IMAP Connection Simulation
+        function diagnoseConnection() {
+            const btn = event.currentTarget;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Conectando a imap.gmail.com:993...</span>`;
+            
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Diagnosticar Conexión IMAP</span>`;
+                const res = document.getElementById('diagnosticResult');
+                res.classList.remove('hidden');
+                showNotification('Diagnóstico IMAP exitoso. Buzón listo y respondiendo.', 'success');
+            }, 1200);
+        }
+
+        // Search Emails by Subject function
+        function searchEmailsBySubject() {
+            const query = document.getElementById('searchSubject').value.toLowerCase().trim();
+            const listContainer = document.getElementById('emailList');
+            listContainer.innerHTML = '';
+
+            const filtered = mockEmails.filter(email => 
+                email.subject.toLowerCase().includes(query) || 
+                email.sender.toLowerCase().includes(query)
+            );
+
+            document.getElementById('resultsCount').innerText = `${filtered.length} resultados`;
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">No se encontraron correos con ese asunto.</div>`;
+                return;
+            }
+
+            filtered.forEach(email => {
+                const item = document.createElement('div');
+                item.className = "p-3 rounded-xl bg-[#070b19] border border-codexBorder hover:border-amber-500/40 cursor-pointer transition space-y-1";
+                item.onclick = () => selectEmailDetail(email.id);
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="font-semibold text-xs text-white truncate max-w-[200px]">${email.subject}</span>
+                        <span class="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">${email.attachments.length} adjunto(s)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400 flex justify-between">
+                        <span>${email.sender}</span>
+                        <span>${email.date}</span>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            showNotification(`Búsqueda IMAP completada: ${filtered.length} correos encontrados`, 'info');
+        }
+
+        // Select and display email details & attachments
+        function selectEmailDetail(id) {
+            const email = mockEmails.find(e => e.id === id);
+            if (!email) return;
+
+            document.getElementById('detailSubject').innerText = email.subject;
+            document.getElementById('detailSender').innerText = `De: ${email.sender} • ${email.date}`;
+            
+            // Format body
+            document.getElementById('detailBodyContent').innerHTML = email.body.split('\n').map(line => `<p>${line}</p>`).join('');
+
+            // Render attachments
+            const attContainer = document.getElementById('detailAttachments');
+            attContainer.innerHTML = '';
+            email.attachments.forEach(att => {
+                const attEl = document.createElement('div');
+                attEl.className = "flex items-center justify-between p-2.5 rounded-xl bg-[#070b19] border border-codexBorder";
+                attEl.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
+                        <span class="text-xs text-slate-200 font-medium truncate">${att.name}</span>
+                        <span class="text-[10px] text-slate-500">(${att.size})</span>
+                    </div>
+                    <button onclick="downloadAttachment('${att.name}')" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition shrink-0">
+                        Extraer
+                    </button>
+                `;
+                attContainer.appendChild(attEl);
+            });
+
+            const card = document.getElementById('emailDetailCard');
+            card.classList.remove('hidden');
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeEmailDetail() {
+            document.getElementById('emailDetailCard').classList.add('hidden');
+        }
+
+        function downloadAttachment(filename) {
+            showNotification(`Archivo adjunto "${filename}" extraído y guardado con éxito`, 'success');
+        }
+
+        function saveImapConfig() {
+            showNotification('Configuración IMAP guardada y sincronizada correctamente', 'success');
+        }
+
+        function resetForm() {
+            document.getElementById('imapEmail').value = "codigosworld@gmail.com";
+            document.getElementById('imapUser').value = "codigosworld@gmail.com";
+            document.getElementById('imapServer').value = "imap.gmail.com";
+            document.getElementById('imapPort').value = "993";
+            showNotification('Formulario restaurado', 'info');
+        }
+
+        // Initialize search list on window load
+        window.onload = function() {
+            searchEmailsBySubject();
+            renderPublicResults(mockEmails);
+        };
+
+        // Render Public Site Search & Live Preview
+        function executePublicSearch() {
+            const query = document.getElementById('publicSearchInput').value.toLowerCase().trim();
+            const filtered = mockEmails.filter(email => 
+                email.subject.toLowerCase().includes(query) || 
+                email.sender.toLowerCase().includes(query) ||
+                email.body.toLowerCase().includes(query)
+            );
+            renderPublicResults(filtered);
+            showNotification(`Búsqueda IMAP pública: ${filtered.length} resultados encontrados`, 'success');
+        }
+
+        function renderPublicResults(emails) {
+            const grid = document.getElementById('publicResultsGrid');
+            grid.innerHTML = '';
+            document.getElementById('publicResultsBadge').innerText = `${emails.length} correos sincronizados`;
+
+            if (emails.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-500 bg-codexCard border border-codexBorder rounded-2xl">No se encontraron correos vinculados con ese criterio.</div>`;
+                return;
+            }
+
+            emails.forEach(email => {
+                const card = document.createElement('div');
+                card.className = "bg-codexCard border border-codexBorder hover:border-amber-500/50 rounded-2xl p-5 transition cursor-pointer space-y-3 shadow-lg flex flex-col justify-between";
+                card.onclick = () => selectPublicPreview(email.id);
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-amber-400">${email.date}</span>
+                            <span class="bg-amber-500/10 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-medium">${email.attachments.length} adjunto(s)</span>
+                        </div>
+                        <h4 class="font-bold text-white text-sm line-clamp-1">${email.subject}</h4>
+                        <p class="text-xs text-slate-400">De: ${email.sender}</p>
+                    </div>
+                    <div class="pt-3 border-t border-codexBorder flex items-center justify-between text-xs text-slate-300">
+                        <span class="truncate max-w-[200px]">Haz clic para previsualizar</span>
+                        <i class="fa-solid fa-arrow-right text-amber-400"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectPublicPreview(id) {
+            const email = mockEmails.find(e => e.id === id);
+            if (!email) return;
+
+            document.getElementById('pubPrevSubject').innerText = email.subject;
+            document.getElementById('pubPrevSender').innerText = `Buzón IMAP: codigosworld@gmail.com • De: ${email.sender} (${email.date})`;
+            document.getElementById('pubPrevBody').innerHTML = email.body.split('\n').map(l => `<p>${l}</p>`).join('');
+
+            const attContainer = document.getElementById('pubPrevAttachments');
+            attContainer.innerHTML = '';
+            email.attachments.forEach(att => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 rounded-xl bg-[#070b19] border border-codexBorder";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-file-pdf"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="text-xs font-semibold text-slate-200 truncate">${att.name}</div>
+                            <div class="text-[10px] text-slate-400">${att.size} • Verificado IMAP</div>
+                        </div>
+                    </div>
+                    <button onclick="downloadAttachment('${att.name}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shrink-0">
+                        Abrir / Descargar
+                    </button>
+                `;
+                attContainer.appendChild(item);
+            });
+
+            const card = document.getElementById('publicLivePreviewCard');
+            card.classList.remove('hidden');
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closePublicPreview() {
+            document.getElementById('publicLivePreviewCard').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Codex - Panel Admin IMAP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex">
+
+    <!-- 1. VISTA PÚBLICA (Se muestra cuando estás en "Mi sitio público") -->
+    <div id="view-public" class="hidden fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
+        <!-- EFECTO FONDO MATRIX -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none flex flex-wrap overflow-hidden text-xs text-green-500 font-mono leading-none select-none">
+            <script>
+                for(let i=0; i<1500; i++) {
+                    document.write(Math.random() > 0.5 ? '1' : '0');
+                }
+            </script>
+        </div>
+
+        <div class="w-full max-w-md z-10">
+            <!-- Input de Búsqueda -->
+            <div id="search-box-container" class="bg-slate-900/90 border border-slate-800 p-8 rounded-2xl shadow-2xl backdrop-blur-md">
+                <div class="text-center mb-6">
+                    <h1 class="text-xl font-bold tracking-tight text-white mb-2">BIENVENIDOS A TU PAGINA DE CODIGOS</h1>
+                    <p class="text-sm text-slate-400">Ingresa el asunto o clave para buscar tu código en el buzón IMAP.</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Asunto o Referencia del Correo</label>
+                        <input type="text" id="search-subject" placeholder="Ej. Mi Disney / Código de acceso" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition">
+                    </div>
+                    <button onclick="simulateSearch()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg shadow-amber-400/20 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Buscar Correo IMAP</span>
+                    </button>
+                    <button onclick="switchSection('dashboard')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition text-sm">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Volver al Panel Admin
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resultado de Búsqueda (Exacto al ejemplo) -->
+            <div id="result-box-container" class="hidden bg-slate-900/95 border border-slate-800 p-6 rounded-2xl shadow-2xl backdrop-blur-md text-center">
+                <h2 class="text-lg font-bold text-white mb-4">BIENVENIDOS A TU PAGINA DE CODIGOS</h2>
+                
+                <div class="flex justify-center mb-3">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-xl">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-bold text-white mb-1">¡Email Encontrado!</h3>
+                <p class="text-xs text-slate-400 mb-6">Recibido: <span id="email-date" class="text-amber-400 font-medium">13/11/2026 00:30:26</span>[cite: 2]</p>
+
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 mb-6 text-left">
+                    <span class="block text-xs text-slate-500 mb-2 font-medium">Contenido del email:</span>
+                    <div class="bg-white text-slate-900 rounded-lg p-4 shadow-inner max-h-60 overflow-y-auto font-sans text-center">
+                        <div class="bg-slate-900 text-white font-bold py-2 px-4 rounded mb-4 inline-block text-sm tracking-wide">
+                            MyDISNEY
+                        </div>
+                        <div class="border-2 border-slate-900 p-6 rounded-lg bg-slate-50">
+                            <p class="text-xl font-extrabold text-slate-900 uppercase leading-snug">Tu código de acceso único</p>
+                            <p class="text-2xl font-mono font-black text-amber-600 mt-3 tracking-widest bg-amber-100 py-2 rounded">WEN-7789-X9</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="copyContent()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg shadow-amber-400/20">
+                        Copiar Contenido
+                    </button>
+                    <button onclick="resetSearch()" class="w-full bg-amber-400/90 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition">
+                        Nueva Consulta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. PANEL DE ADMINISTRACIÓN (LAYOUT CON MENÚ LATERAL) -->
+    <!-- Menú Lateral -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
+        <div>
+            <!-- Logo -->
+            <div class="p-6 border-b border-slate-800 flex items-center space-x-2">
+                <span class="text-xl font-black tracking-wider text-amber-400">CODE<span class="text-white">CODEX</span></span>
+            </div>
+
+            <!-- Enlaces del Menú -->
+            <nav class="p-4 space-y-1">
+                <button onclick="switchSection('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <i class="fa-solid fa-house w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchSection('plataformas')" id="nav-plataformas" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <i class="fa-solid fa-layer-group w-5 text-center"></i>
+                    <span>Plataformas</span>
+                </button>
+                <button onclick="switchSection('servidores')" id="nav-servidores" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                    <i class="fa-solid fa-server w-5 text-center"></i>
+                    <span>Servidores</span>
+                </button>
+                <button onclick="switchSection('public')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <i class="fa-solid fa-arrow-up-right-from-square w-5 text-center"></i>
+                    <span>Mi sitio público</span>
+                </button>
+                <button onclick="switchSection('registros')" id="nav-registros" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <i class="fa-solid fa-clipboard-list w-5 text-center"></i>
+                    <span>Registros</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Cerrar Sesión -->
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="alert('Sesión cerrada correctamente.')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition">
+                <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal del Panel -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- Header superior -->
+        <header class="bg-slate-900 border-b border-slate-800 px-8 py-4 flex justify-between items-center">
+            <div class="md:hidden">
+                <span class="text-xl font-black tracking-wider text-amber-400">CODE<span class="text-white">CODEX</span></span>
+            </div>
+            <div class="hidden md:block"></div>
+            <!-- Perfil Usuario -->
+            <div class="flex items-center space-x-3 ml-auto">
+                <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 font-semibold text-xs">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+                <span class="text-sm font-medium text-slate-300">Hola, <strong class="text-white">Mauricio</strong></span>[cite: 5, 7, 8]
+            </div>
+        </header>
+
+        <div class="p-8 overflow-y-auto flex-1">
+            
+            <!-- SECCIÓN: DASHBOARD -->
+            <section id="sec-dashboard" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+                    <p class="text-sm text-slate-400">Resumen general de actividad y conexiones IMAP.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Correos Consultados Hoy</p>
+                        <p class="text-3xl font-black text-white mt-2">24</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Estado Servidor IMAP</p>
+                        <p class="text-3xl font-black text-emerald-400 mt-2 flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-lg">Conectado</span>
+                        </p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Plataformas Activas</p>
+                        <p class="text-3xl font-black text-amber-400 mt-2">5</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: PLATAFORMAS -->
+            <section id="sec-plataformas" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Plataformas</h1>
+                    <p class="text-sm text-slate-400">Gestiona las plataformas de streaming</p>[cite: 5]
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="w-full md:flex-1">
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Buscar</label>
+                        <input type="text" placeholder="Nombre o descripción..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">[cite: 5]
+                    </div>
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Estado</label>
+                        <select class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                            <option>Todos</option>
+                            <option>Activo</option>
+                            <option>Inactivo</option>
+                        </select>[cite: 5]
+                    </div>
+                    <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
+                        <button onclick="alert('Filtro aplicado')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
+                            Filtrar
+                        </button>
+                    </div>
+                    <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
+                        <button onclick="switchSection('nueva-plataforma')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nueva Plataforma</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800 tracking-wider">
+                            <tr>
+                                <th class="p-4 pl-6">Plataforma</th>
+                                <th class="p-4">Asuntos Configurados</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4 text-right pr-6">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-xs">C</div>
+                                    <span class="font-bold text-white tracking-wide">CRUNCHYROLL</span>
+                                </td>
+                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
+                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400 transition"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs">D</div>
+                                    <span class="font-bold text-white tracking-wide">DISNEY</span>
+                                </td>
+                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
+                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400 transition"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-xs">H</div>
+                                    <span class="font-bold text-white tracking-wide">HBO</span>
+                                </td>
+                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
+                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400 transition"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 font-bold text-xs">N</div>
+                                    <span class="font-bold text-white tracking-wide">NETFLIX</span>
+                                </td>
+                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">4 asuntos</span></td>
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
+                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400 transition"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs">S</div>
+                                    <span class="font-bold text-white tracking-wide">Spotify</span>
+                                </td>
+                                <td class="p-4"><div class="text-xs text-slate-400 mb-1">Mauricio</div><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium">1 asuntos</span></td>
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
+                                <td class="p-4 text-right pr-6 space-x-2"><button class="p-2 text-slate-400 hover:text-amber-400 transition"><i class="fa-solid fa-pen-to-square"></i></button><button class="p-2 text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: NUEVA PLATAFORMA -->
+            <section id="sec-nueva-plataforma" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Nueva Plataforma</h1>
+                    <p class="text-sm text-slate-400">Agrega una nueva plataforma de streaming</p>[cite: 6]
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl space-y-6">
+                    <form onsubmit="event.preventDefault(); alert('¡Plataforma creada exitosamente!'); switchSection('plataformas');" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Nombre de la Plataforma *</label>
+                                <input type="text" placeholder="Netflix, Spotify, etc." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 6]
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Slug *</label>
+                                <input type="text" placeholder="netflix, spotify" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 6]
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Imagen de Portada</label>
+                            <div class="border-2 border-dashed border-slate-700 hover:border-amber-400/50 bg-slate-950 rounded-2xl p-8 text-center cursor-pointer transition">
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    <div class="text-slate-400 text-3xl mb-1"><i class="fa-regular fa-images"></i></div>
+                                    <p class="text-sm font-medium text-slate-300">Haz clic para seleccionar una imagen</p>
+                                    <p class="text-xs text-slate-500">JPEG, PNG, JPG, GIF, SVG, WebP (max 2MB)</p>[cite: 6]
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Descripción</label>
+                            <textarea rows="4" placeholder="Descripción opcional de la plataforma..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400"></textarea>[cite: 6]
+                        </div>
+                        <div class="flex items-center space-x-3 pt-1">
+                            <input type="checkbox" id="plat-active" checked class="w-4 h-4 rounded border-slate-700 text-amber-400 focus:ring-amber-400 bg-slate-950">
+                            <label for="plat-active" class="text-sm font-medium text-slate-200">Plataforma activa</label>[cite: 6]
+                        </div>
+                        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 pt-4 border-t border-slate-800">
+                            <button type="button" onclick="switchSection('plataformas')" class="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl transition">Cancelar</button>
+                            <button type="submit" class="w-full md:w-1/2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg">Crear Plataforma</button>[cite: 6]
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: SERVIDORES IMAP (LISTADO EXACTO) -->
+            <section id="sec-servidores" class="admin-section space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Servidores IMAP</h1>
+                    <p class="text-sm text-slate-400">Gestiona los servidores IMAP para verificación de códigos</p>[cite: 7]
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="w-full md:flex-1">
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Buscar</label>
+                        <input type="text" placeholder="Correo, usuario o servidor..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">[cite: 7]
+                    </div>
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Estado</label>
+                        <select class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                            <option>Todos</option>
+                            <option>Activo</option>
+                            <option>Inactivo</option>
+                        </select>[cite: 7]
+                    </div>
+                    <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
+                        <button onclick="alert('Filtro aplicado')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-sm transition shadow-md">
+                            Filtrar
+                        </button>
+                    </div>
+                    <div class="w-full md:w-auto flex items-end pt-5 md:pt-0">
+                        <button onclick="switchSection('nuevo-servidor')" class="w-full md:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Nuevo Servidor</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800 tracking-wider">
+                            <tr>
+                                <th class="p-4 pl-6">Correo</th>
+                                <th class="p-4">Usuario</th>
+                                <th class="p-4">Servidor IMAP</th>
+                                <th class="p-4">Encriptación</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4">Autorización</th>
+                                <th class="p-4 text-right pr-6">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr class="hover:bg-slate-850/50 transition">
+                                <td class="p-4 pl-6 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xs">
+                                        <i class="fa-solid fa-envelope"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-white">codigosworld@gmail.com</div>[cite: 7]
+                                        <div class="text-xs text-slate-500">codigosworld@gmail.com</div>[cite: 7]
+                                    </div>
+                                </td>
+                                <td class="p-4 font-medium text-slate-300">Mauricio</td>[cite: 7]
+                                <td class="p-4 font-mono text-xs text-slate-300">imap.gmail.com:993</td>[cite: 7]
+                                <td class="p-4"><span class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-md text-xs font-medium">SSL</span></td>[cite: 7]
+                                <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold inline-flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Activo</span></span></td>[cite: 7]
+                                <td class="p-4"><span class="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-semibold inline-flex items-center space-x-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span><span>Autorizado</span></span></td>[cite: 7]
+                                <td class="p-4 text-right pr-6 space-x-2">
+                                    <button onclick="alert('Servidor verificado y autorizado')" class="p-2 text-slate-400 hover:text-emerald-400 transition" title="Verificar"><i class="fa-solid fa-circle-check"></i></button>
+                                    <button class="p-2 text-slate-400 hover:text-amber-400 transition" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button class="p-2 text-slate-400 hover:text-rose-400 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: NUEVO SERVIDOR IMAP (FORMULARIO EXACTO) -->
+            <section id="sec-nuevo-servidor" class="admin-section hidden space-y-6 max-w-2xl">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-white">Nuevo Servidor IMAP</h2>
+                    <p class="text-xs text-slate-400">Agrega un nuevo servidor IMAP para verificación de códigos</p>[cite: 8]
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl">
+                    <form onsubmit="event.preventDefault(); alert('¡Servidor IMAP creado exitosamente!'); switchSection('servidores');" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Correo Electrónico *</label>
+                            <input type="email" placeholder="correo@servidor.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 8]
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Usuario IMAP *</label>
+                            <input type="text" placeholder="digitalentretenimientomx@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 8]
+                            <p class="text-[11px] text-slate-500 mt-1">Gmail: tu correo completo (ej. tu@gmail.com). Contraseña: la de aplicación de 16 letras, sin espacios.</p>[cite: 8]
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Contraseña IMAP *</label>
+                            <input type="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 8]
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Servidor IMAP *</label>
+                                <input type="text" value="imap.gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 8]
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Puerto IMAP *</label>
+                                <input type="text" value="993" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400" required>[cite: 8]
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 -mt-2">Gmail: <strong class="text-slate-400">imap.gmail.com</strong> · puerto <strong class="text-slate-400">993</strong> · SSL</p>[cite: 8]
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Encriptación</label>
+                            <select class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400">
+                                <option>SSL/TLS (Recomendado)</option>
+                                <option>STARTTLS</option>
+                                <option>Ninguna</option>
+                            </select>[cite: 8]
+                        </div>
+                        <div class="flex items-center space-x-3 pt-2">
+                            <input type="checkbox" id="serv-active" checked class="w-4 h-4 rounded border-slate-700 text-amber-400 focus:ring-amber-400 bg-slate-950">
+                            <label for="serv-active" class="text-sm font-medium text-slate-200">Servidor activo</label>[cite: 8]
+                        </div>
+                        <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
+                            <h3 class="text-xs font-semibold uppercase text-slate-400 mb-1">Diagnóstico de Conexión</h3>
+                            <p class="text-xs text-slate-500 mb-3">Verifica que la conexión IMAP funcione antes de guardar el servidor.</p>[cite: 8]
+                            <button type="button" onclick="testImapConnection()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition flex items-center justify-center space-x-2 text-sm shadow-md">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Diagnosticar Conexión IMAP</span>
+                            </button>
+                        </div>
+                        <div class="flex space-x-4 pt-2">
+                            <button type="button" onclick="switchSection('servidores')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl transition">Cancelar</button>
+                            <button type="submit" class="w-1/2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg">Crear Servidor</button>[cite: 8]
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: REGISTROS -->
+            <section id="sec-registros" class="admin-section hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Registros</h1>
+                    <p class="text-sm text-slate-400">Historial de consultas de correos y eventos del sistema.</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
+                            <tr>
+                                <th class="p-4">Fecha / Hora</th>
+                                <th class="p-4">Asunto Buscado</th>
+                                <th class="p-4">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr>
+                                <td class="p-4">13/11/2026 00:30:26</td>
+                                <td class="p-4 text-white font-medium">Mi Disney</td>
+                                <td class="p-4"><span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-md text-xs font-semibold">Encontrado</span></td>
+                            </tr>
+                            <tr>
+                                <td class="p-4">12/11/2026 21:15:04</td>
+                                <td class="p-4 text-white font-medium">Netflix Acceso</td>
+                                <td class="p-4"><span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-md text-xs font-semibold">Encontrado</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            switchSection('servidores');
+        });
+
+        function switchSection(sectionId) {
+            if (sectionId === 'public') {
+                document.getElementById('view-public').classList.remove('hidden');
+                return;
+            }
+
+            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Mapear secciones virtuales a principales si es necesario
+            let targetId = sectionId;
+            if(sectionId === 'nueva-plataforma') targetId = 'nueva-plataforma';
+            if(sectionId === 'nuevo-servidor') targetId = 'nuevo-servidor';
+
+            document.getElementById('sec-' + targetId).classList.remove('hidden');
+
+            const navs = ['dashboard', 'plataformas', 'servidores', 'registros'];
+            navs.forEach(nav => {
+                const btn = document.getElementById('nav-' + nav);
+                if (btn) {
+                    if (nav === sectionId || (sectionId === 'nueva-plataforma' && nav === 'plataformas') || (sectionId === 'nuevo-servidor' && nav === 'servidores')) {
+                        btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition bg-amber-400/10 text-amber-400 border border-amber-400/20";
+                    } else {
+                        btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+                    }
+                }
+            });
+        }
+
+        function simulateSearch() {
+            const subject = document.getElementById('search-subject').value;
+            if(!subject) {
+                alert('Por favor ingresa un asunto o clave de búsqueda.');
+                return;
+            }
+            
+            const now = new Date();
+            const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            document.getElementById('email-date').innerText = dateStr;
+
+            document.getElementById('search-box-container').classList.add('hidden');
+            document.getElementById('result-box-container').classList.remove('hidden');
+        }
+
+        function resetSearch() {
+            document.getElementById('search-subject').value = '';
+            document.getElementById('result-box-container').classList.add('hidden');
+            document.getElementById('search-box-container').classList.remove('hidden');
+        }
+
+        function copyContent() {
+            navigator.clipboard.writeText("WEN-7789-X9");
+            alert('¡Código copiado al portapapeles con éxito!');
+        }
+
+        function testImapConnection() {
+            alert('¡Conexión IMAP establecida exitosamente con imap.gmail.com:993 (SSL/TLS)!');
+        }
+    </script>
+</body>
+</html>
