@@ -1,26 +1,47 @@
+const express = require('express');
+const imap = require('imap');
+const { simpleParser } = require('mailparser');
+const cors = require('cors');
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Función auxiliar para crear la conexión IMAP usando las credenciales del servidor o de la petición
+function createImapConnection(config) {
+    return new imap({
+        user: config.user || process.env.IMAP_USER,
+        password: config.password || process.env.IMAP_PASSWORD,
+        host: config.host || process.env.IMAP_HOST || 'imap.gmail.com',
+        port: config.port || process.env.IMAP_PORT || 993,
+        tls: true,
+        tlsOptions: { rejectUnauthorized: false }
+    });
+}
+
+// Endpoint para buscar correos en el buzón IMAP
 app.post('/api/search-email', (req, res) => {
     const { subjectQuery, imapConfig } = req.body;
-    const imap = createImapConnection(imapConfig || {});
+    const imapInstance = createImapConnection(imapConfig || {});
 
-    imap.once('ready', () => {
-        imap.openBox('INBOX', true, (err, box) => {
+    imapInstance.once('ready', () => {
+        imapInstance.openBox('INBOX', true, (err, box) => {
             if (err) {
-                imap.end();
-                return res.status(500).json({ success: false, error: 'No se pudo abrir INBOX' });
+                imapInstance.end();
+                return res.status(500).json({ success: false, error: 'No se pudo abrir la bandeja INBOX' });
             }
 
-            // Cambiamos el criterio a 'TEXT' para que busque en todo el mensaje 
-            // (Asunto, Remitente, Destinatario y Cuerpo del mensaje)
+            // 'TEXT' busca en todo el mensaje: Asunto, Remitente, Destinatario y Cuerpo
             const searchCriteria = [['TEXT', subjectQuery]];
 
-            imap.search(searchCriteria, (err, results) => {
+            imapInstance.search(searchCriteria, (err, results) => {
                 if (err || !results || results.length === 0) {
-                    imap.end();
+                    imapInstance.end();
                     return res.status(404).json({ success: false, message: 'Correo no encontrado con ese criterio.' });
                 }
 
-                // Toma el correo más reciente que coincida
-                const f = imap.fetch(results[results.length - 1], { bodies: '' });
+                // Extrae el correo más reciente que coincida con la búsqueda
+                const f = imapInstance.fetch(results[results.length - 1], { bodies: '' });
                 let emailData = {};
 
                 f.on('message', (msg) => {
@@ -40,21 +61,26 @@ app.post('/api/search-email', (req, res) => {
                 });
 
                 f.once('error', (err) => {
-                    imap.end();
+                    imapInstance.end();
                     res.status(500).json({ success: false, error: err.message });
                 });
 
                 f.once('end', () => {
-                    imap.end();
+                    imapInstance.end();
                     res.json({ success: true, data: emailData });
                 });
             });
         });
     });
 
-    imap.once('error', (err) => {
+    imapInstance.once('error', (err) => {
         res.status(500).json({ success: false, error: err.message });
     });
 
-    imap.connect();
+    imapInstance.connect();
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

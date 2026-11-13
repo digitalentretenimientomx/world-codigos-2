@@ -1,13 +1,13 @@
 {
-  "name": "code-codex-imap",
+  "name": "world-codigos",
   "version": "1.0.0",
+  "description": "Servidor IMAP para buscar codigos de correo en vivo",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "imap": "^0.8.19",
     "mailparser": "^3.7.1"
