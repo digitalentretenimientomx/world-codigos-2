@@ -19,7 +19,7 @@ function createImapConnection(config) {
     });
 }
 
-// Ruta Raíz con TODAS las secciones, incluyendo la vista de Editar Plataforma
+// Ruta Raíz con TODAS las secciones y eliminación funcional
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -188,8 +188,8 @@ app.get('/', (req, res) => {
                                 <th class="p-4 text-right pr-6">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800 text-slate-300">
-                            <tr class="hover:bg-slate-850/50 transition">
+                        <tbody id="platforms-table-body" class="divide-y divide-slate-800 text-slate-300">
+                            <tr id="row-crunchyroll" class="hover:bg-slate-850/50 transition">
                                 <td class="p-4 pl-6 flex items-center space-x-3">
                                     <div class="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-xs">C</div>
                                     <span class="font-bold text-white tracking-wide">CRUNCHYROLL</span>
@@ -198,7 +198,7 @@ app.get('/', (req, res) => {
                                 <td class="p-4"><span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span></td>
                                 <td class="p-4 text-right pr-6 space-x-2">
                                     <button onclick="switchSection('editar-plataforma')" class="p-2 text-slate-400 hover:text-amber-400 transition" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                                    <button class="p-2 text-slate-400 hover:text-rose-400 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="eliminarFila('row-crunchyroll')" class="p-2 text-slate-400 hover:text-rose-400 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                                 </td>
                             </tr>
                         </tbody>
@@ -206,7 +206,7 @@ app.get('/', (req, res) => {
                 </div>
             </section>
 
-            <!-- SECCIÓN: EDITAR PLATAFORMA (EXACTO A TU IMAGEN) -->
+            <!-- SECCIÓN: EDITAR PLATAFORMA -->
             <section id="sec-editar-plataforma" class="admin-section hidden space-y-6">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Editar Plataforma</h1>
@@ -236,12 +236,11 @@ app.get('/', (req, res) => {
                                     <p class="text-xs text-slate-500">JPEG, PNG, JPG, GIF, SVG, WebP (max 2MB)</p>
                                 </div>
                             </div>
-                            <span class="text-xs text-slate-400 block mt-2">Vista previa nueva</span>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Descripción</label>
-                            <textarea rows="3" placeholder="Descripción opcional de la plataforma..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400">Descripción opcional de la plataforma...</textarea>
+                            <textarea rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400">Descripción opcional de la plataforma...</textarea>
                         </div>
 
                         <div class="flex items-center space-x-3 pt-1">
@@ -263,26 +262,37 @@ app.get('/', (req, res) => {
                             <h2 class="text-lg font-bold text-white">Asuntos Configurados</h2>
                             <p class="text-xs text-slate-400">Palabras clave que el sistema buscará en los correos</p>
                         </div>
-                        <button onclick="alert('Abrir modal para agregar asunto de correo')" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow-md flex items-center space-x-2">
+                        <button onclick="toggleAddSubject()" id="btn-toggle-asunto" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow-md flex items-center space-x-2">
                             <i class="fa-solid fa-plus"></i>
                             <span>Agregar Asunto</span>
                         </button>
                     </div>
 
-                    <!-- Tarjeta del Asunto Configurado -->
-                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
-                                <i class="fa-solid fa-envelope"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-white">Confirma tu nuevo inicio de sesión en Crunchyroll</h3>
-                                <p class="text-[11px] text-slate-500">Creado: 14/08/2026</p>
-                            </div>
+                    <!-- Input para Agregar Asunto -->
+                    <div id="add-subject-box" class="hidden bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <input type="text" id="new-subject-input" placeholder="Asunto del correo (ej: Tu código de Netflix)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400">
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="toggleAddSubject()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition">Cancelar</button>
+                            <button onclick="guardarAsunto()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Guardar</button>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span>
-                            <button onclick="alert('Eliminar asunto')" class="text-slate-500 hover:text-rose-400 transition p-2"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+
+                    <!-- Lista de Asuntos -->
+                    <div id="subjects-list-container" class="space-y-3">
+                        <div id="subject-card-1" class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
+                                    <i class="fa-solid fa-envelope"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-white">Confirma tu nuevo inicio de sesión en Crunchyroll</h3>
+                                    <p class="text-[11px] text-slate-500">Creado: 14/08/2026</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span>
+                                <button onclick="eliminarAsunto('subject-card-1')" class="text-slate-500 hover:text-rose-400 transition p-2" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -333,7 +343,7 @@ app.get('/', (req, res) => {
             </section>
 
             <!-- SECCIÓN: SERVIDORES IMAP -->
-            <section id="sec-servidores" class="admin-section hidden space-y-6">
+            <section id="sec-servidores" class="admin-section space-y-6">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Servidores IMAP</h1>
                     <p class="text-sm text-slate-400">Gestiona los servidores IMAP para verificación de códigos</p>
@@ -447,6 +457,57 @@ app.get('/', (req, res) => {
                     }
                 }
             });
+        }
+
+        function toggleAddSubject() {
+            const box = document.getElementById('add-subject-box');
+            box.classList.toggle('hidden');
+        }
+
+        function guardarAsunto() {
+            const val = document.getElementById('new-subject-input').value;
+            if(!val) { alert('Ingresa un asunto'); return; }
+            
+            const container = document.getElementById('subjects-list-container');
+            const newId = 'subject-' + Date.now();
+            
+            const card = document.createElement('div');
+            card.id = newId;
+            card.className = "bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between";
+            card.innerHTML = \`
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">\${val}</h3>
+                        <p class="text-[11px] text-slate-500">Creado: Hoy</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">Activo</span>
+                    <button onclick="eliminarAsunto('\${newId}')" class="text-slate-500 hover:text-rose-400 transition p-2" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            \`;
+            container.appendChild(card);
+            
+            document.getElementById('new-subject-input').value = '';
+            toggleAddSubject();
+            alert('¡Asunto agregado con éxito!');
+        }
+
+        function eliminarAsunto(id) {
+            if(confirm('¿Estás seguro de eliminar este asunto?')) {
+                const el = document.getElementById(id);
+                if(el) el.remove();
+            }
+        }
+
+        function eliminarFila(id) {
+            if(confirm('¿Estás seguro de eliminar esta plataforma?')) {
+                const el = document.getElementById(id);
+                if(el) el.remove();
+            }
         }
 
         async function buscarCorreoReal() {
